@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, status, Depends
+from fastapi import FastAPI, HTTPException, status, Depends, BackgroundTasks
 from database import database, post_table, user_table, comments_table
 from models.post import UserPost, UserPostIn, Comment, CommentIn, UserPostWithComments
 from models.user import User, UserIn
@@ -8,6 +8,7 @@ from security import (
     authenticate_user,
     get_current_user,
 )
+import tasks
 
 app = FastAPI()
 
@@ -37,10 +38,11 @@ async def get_all_posts():
 
 
 @app.post("/register")
-async def register(user: UserIn):
+async def register(user: UserIn, background_tasks: BackgroundTasks):
     hashed_password = get_password_hash(user.password)
-    query = user_table.insert().values(username=user.username, password=hashed_password)
+    query = user_table.insert().values(username=user.username, email=user.email, password=hashed_password)
     await database.execute(query)
+    background_tasks.add_task(tasks.send_user_registration_email, user.email, user.username)
     access_token = create_access_token(user.username)
     return {"access_token": access_token, "token_type": "bearer"}
 
