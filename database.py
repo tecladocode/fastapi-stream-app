@@ -1,8 +1,12 @@
 import databases
 import sqlalchemy
+from config import config
 
-DATABASE_URL = "sqlite:///data.db"  # could come from an env var
-database = databases.Database(DATABASE_URL)
+
+def get_db():
+    return databases.Database(config.DATABASE_URL, force_rollback=config.DB_FORCE_ROLL_BACK)
+
+
 metadata = sqlalchemy.MetaData()
 
 post_table = sqlalchemy.Table(
@@ -17,8 +21,7 @@ user_table = sqlalchemy.Table(
     "users",
     metadata,
     sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True),
-    sqlalchemy.Column("username", sqlalchemy.String(30)),
-    sqlalchemy.Column("email", sqlalchemy.String),
+    sqlalchemy.Column("email", sqlalchemy.String, unique=True),
     sqlalchemy.Column("password", sqlalchemy.String)
 )
 
@@ -31,7 +34,6 @@ comments_table = sqlalchemy.Table(
     sqlalchemy.Column("user_id", sqlalchemy.ForeignKey("users.id"), nullable=False),
 )
 
-engine = sqlalchemy.create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
+engine = sqlalchemy.create_engine(config.DATABASE_URL, connect_args={"check_same_thread": False})
 metadata.create_all(engine)
+database = get_db()

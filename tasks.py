@@ -17,13 +17,12 @@ def send_simple_message(to: str, subject: str, body: str):
             "text": body
         },
     )
-    print(response)
     return response
 
 
-def send_user_registration_email(email: str, username: str):
+def send_user_registration_email(email: str):
     return send_simple_message(
         email,
         "Successfully signed up",
-        f"Hi {username}! You have successfully signed up to the Stores REST API."
+        f"Hi {email}! You have successfully signed up to the Stores REST API."
     )

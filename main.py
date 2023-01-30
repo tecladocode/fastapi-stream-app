@@ -7,10 +7,13 @@ from security import (
     create_access_token,
     authenticate_user,
     get_current_user,
+    get_user
 )
 import tasks
+from router.upload import router as upload_router
 
 app = FastAPI()
+app.include_router(upload_router)
 
 
 @app.on_event("startup")
@@ -39,31 +42,36 @@ async def get_all_posts():
 
 @app.post("/register")
 async def register(user: UserIn, background_tasks: BackgroundTasks):
+    if await get_user(user.email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A user with that email already exists",
+        )
+    
     hashed_password = get_password_hash(user.password)
-    query = user_table.insert().values(username=user.username, email=user.email, password=hashed_password)
-    await database.execute(query)
-    background_tasks.add_task(tasks.send_user_registration_email, user.email, user.username)
-    access_token = create_access_token(user.username)
+    query = user_table.insert().values(email=user.email, password=hashed_password)
+    user_id = await database.execute(query)
+    background_tasks.add_task(tasks.send_user_registration_email, user.email)
+    access_token = create_access_token(user.email)
     return {"access_token": access_token, "token_type": "bearer"}
 
 
 @app.post("/token")
 async def login(user: UserIn):
-    user = await authenticate_user(user.username, user.password)
+    user = await authenticate_user(user.email, user.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token = create_access_token(user.username)
+    access_token = create_access_token(user.email)
     return {"access_token": access_token, "token_type": "bearer"}
 
 
 @app.post("/comment", response_model=Comment)
 async def create_comment(
-    comment: CommentIn, current_user: User = Depends(get_current_user)
-):
+    comment: CommentIn, current_user: User = Depends(get_current_user)):
     data = {**comment.dict(), "user_id": current_user.id}
     query = comments_table.insert().values(data)
     last_record_id = await database.execute(query)

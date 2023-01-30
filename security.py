@@ -30,15 +30,15 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-async def get_user(username: str):
-    query = user_table.select().where(user_table.c.username == username)
+async def get_user(email: str):
+    query = user_table.select().where(user_table.c.email == email)
     result = await database.fetch_one(query)
     if result:
         return result
 
 
-async def authenticate_user(username: str, password: str):
-    user = await get_user(username)
+async def authenticate_user(email: str, password: str):
+    user = await get_user(email)
     if not user:
         return False
     if not verify_password(password, user.password):
@@ -54,12 +54,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        email: str = payload.get("sub")
+        if email is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = await get_user(username=username)
+    user = await get_user(email=email)
     if user is None:
         raise credentials_exception
     return user
