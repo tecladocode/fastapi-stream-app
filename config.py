@@ -1,48 +1,54 @@
-import os
+# Most of this taken from Redowan Delowar's post on configurations with Pydantic
+# https://rednafi.github.io/digressions/python/2020/06/03/python-configs.html
 from functools import lru_cache
 from typing import Optional
-from pydantic import BaseSettings
+from pydantic import BaseSettings, Field
 
 
-class Settings(BaseSettings):
-    DEBUG: bool = False
-    TESTING: bool = False
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "DEV")
-    DATABASE_URL: Optional[str] = os.getenv(
-        "DATABASE_URL", "sqlite:///data.db"
-    )
+class BaseConfig(BaseSettings):
+    ENV_STATE: Optional[str] = Field(None, env="ENV_STATE")
+
+
+class GlobalConfig(BaseConfig):
+    DATABASE_URL: Optional[str] = None
     DB_FORCE_ROLL_BACK: bool = False
+    B2_KEY_ID: Optional[str] = None
+    B2_APPLICATION_KEY: Optional[str] = None
+    B2_BUCKET_NAME: Optional[str] = None
+    MAILGUN_DOMAIN: Optional[str] = None
+    MAILGUN_API_KEY: Optional[str] = None
+
+    class Config:
+        """Loads the dotenv file. Including this is necessary to get
+        pydantic to load a .env file."""
+
+        env_file: str = ".env"
 
 
-class DevConfig(Settings):
-    DEBUG = True
+class DevConfig(GlobalConfig):
+    class Config:
+        env_prefix: str = "DEV_"
 
 
-class TestConfig(Settings):
-    DEBUG = True
-    TESTING = True
+class ProdConfig(GlobalConfig):
+    class Config:
+        env_prefix: str = "PROD_"
+
+
+class TestConfig(GlobalConfig):
     DATABASE_URL = "sqlite:///test.db"
     DB_FORCE_ROLL_BACK = True
 
-
-class FactoryConfig:
-    """Returns a config instance depends on the ENV_STATE variable."""
-
-    def __init__(self, environment: Optional[str] = "DEV"):
-        self.environment = environment
-
-    def __call__(self):
-        if self.environment == "TEST":
-            return TestConfig()
-        elif self.environment == "PROD":
-            return Settings()
-        return DevConfig()
+    class Config:
+        env_prefix: str = "TEST_"
 
 
 @lru_cache()
-def get_configuration():
-    return FactoryConfig(Settings().ENVIRONMENT)()
+def get_config(env_state):
+    """Instantiate config based on the environment."""
+    configs = {"dev": DevConfig, "prod": ProdConfig, "test": TestConfig}
+    return configs[env_state]()
 
 
 print("Getting configuration")
-config = get_configuration()
+config = get_config(BaseConfig().ENV_STATE)

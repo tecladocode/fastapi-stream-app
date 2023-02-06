@@ -4,7 +4,9 @@ from config import config
 
 
 def get_db():
-    return databases.Database(config.DATABASE_URL, force_rollback=config.DB_FORCE_ROLL_BACK)
+    return databases.Database(
+        config.DATABASE_URL, force_rollback=config.DB_FORCE_ROLL_BACK
+    )
 
 
 metadata = sqlalchemy.MetaData()
@@ -22,7 +24,8 @@ user_table = sqlalchemy.Table(
     metadata,
     sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True),
     sqlalchemy.Column("email", sqlalchemy.String, unique=True),
-    sqlalchemy.Column("password", sqlalchemy.String)
+    sqlalchemy.Column("password", sqlalchemy.String),
+    sqlalchemy.Column("confirmed", sqlalchemy.Boolean, default=False),
 )
 
 comments_table = sqlalchemy.Table(
@@ -34,6 +37,8 @@ comments_table = sqlalchemy.Table(
     sqlalchemy.Column("user_id", sqlalchemy.ForeignKey("users.id"), nullable=False),
 )
 
-engine = sqlalchemy.create_engine(config.DATABASE_URL, connect_args={"check_same_thread": False})
+engine = sqlalchemy.create_engine(
+    config.DATABASE_URL, connect_args={"check_same_thread": False}
+)
 metadata.create_all(engine)
 database = get_db()
