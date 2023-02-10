@@ -1,5 +1,7 @@
-import requests
 import os
+
+import requests
+
 from config import config
 
 

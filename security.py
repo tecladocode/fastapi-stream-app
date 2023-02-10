@@ -1,9 +1,11 @@
 import datetime
-from fastapi import status, HTTPException, Depends
+
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from database import database, user_table
-from jose import JWTError, jwt, ExpiredSignatureError
+from jose import JWTError, jwt
 from passlib.context import CryptContext
+
+from database import database, user_table
 
 SECRET_KEY = "9b73f2a1bdd7ae163444473d29a6885ffa22ab26117068f72a5a56a74d12d1fc"
 ALGORITHM = "HS256"
@@ -83,8 +85,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         email = payload.get("sub")
         if email is None:
             raise credentials_exception
-    except JWTError:
-        raise credentials_exception
+    except JWTError as e:
+        raise credentials_exception from e
     user = await get_user(email=email)
     if user is None:
         raise credentials_exception

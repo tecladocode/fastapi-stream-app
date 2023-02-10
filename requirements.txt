@@ -9,8 +9,3 @@ requests
 python-multipart
 aiofiles
 b2sdk
-pytest
-httpx
-pytest-asyncio
-pytest-mock
-pyfakefs
