@@ -1,20 +1,21 @@
 from enum import Enum
+
 import sqlalchemy
 from fastapi import APIRouter, Depends
-from database import database, post_table, comments_table, likes_table
+
+from database import comments_table, database, likes_table, post_table
 from models.post import (
-    UserPost,
-    UserPostIn,
-    UserPostWithLikes,
-    UserPostWithComments,
     Comment,
     CommentIn,
     PostLike,
     PostLikeIn,
+    UserPost,
+    UserPostIn,
+    UserPostWithComments,
+    UserPostWithLikes,
 )
 from models.user import User
 from security import get_current_user
-
 
 router = APIRouter()
 
@@ -80,7 +81,7 @@ async def get_post_with_comments(post_id: int):
         .group_by(post_table.c.id)
     )
     post = await database.fetch_one(query)
-    return {**post, "comments": await get_comments_on_post(post_id)}
+    return {"post": post, "comments": await get_comments_on_post(post_id)}
 
 
 @router.post("/like", response_model=PostLike)

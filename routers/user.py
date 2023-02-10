@@ -1,17 +1,17 @@
-from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, status
+from jose import ExpiredSignatureError, JWTError
+
+import tasks
 from database import database, user_table
 from models.user import UserIn
 from security import (
-    get_password_hash,
+    authenticate_user,
     create_access_token,
     create_confirmation_token,
     get_email_from_confirmation_token,
-    authenticate_user,
+    get_password_hash,
     get_user,
 )
-from jose import JWTError, ExpiredSignatureError
-import tasks
-
 
 router = APIRouter()
 

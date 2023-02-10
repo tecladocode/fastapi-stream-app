@@ -1,8 +1,9 @@
 from fastapi import FastAPI
+
 from database import database
-from router.upload import router as upload_router
-from router.user import router as user_router
-from router.posts import router as posts_router
+from routers.posts import router as posts_router
+from routers.upload import router as upload_router
+from routers.user import router as user_router
 
 app = FastAPI()
 app.include_router(upload_router)
