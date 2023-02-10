@@ -37,13 +37,14 @@ async def test_create_post(async_client: AsyncClient, logged_in_token: str):
 
 @pytest.mark.anyio
 async def test_get_all_posts(async_client: AsyncClient, created_post: dict):
-    response = await async_client.get("/post")
+    response = await async_client.get("/post", params={"sorting": "new"})
     assert response.status_code == 200
     assert response.json() == [
         {
             "id": created_post["id"],
             "body": created_post["body"],
             "user_id": created_post["user_id"],
+            "likes": 0,
         }
     ]
 
@@ -90,9 +91,12 @@ async def test_get_post_with_comments(
     response = await async_client.get(f"/post/{created_post['id']}")
     assert response.status_code == 200
     assert response.json() == {
-        "id": created_post["id"],
-        "body": created_post["body"],
-        "user_id": created_post["user_id"],
+        "post": {
+            "id": created_post["id"],
+            "body": created_post["body"],
+            "user_id": created_post["user_id"],
+            "likes": 0,
+        },
         "comments": [
             {
                 "id": created_comment["id"],
