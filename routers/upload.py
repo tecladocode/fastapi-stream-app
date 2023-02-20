@@ -1,6 +1,8 @@
 import os
+
 import aiofiles
-from fastapi import APIRouter, UploadFile, HTTPException, status
+from fastapi import APIRouter, HTTPException, UploadFile, status
+
 from libs.b2 import b2_upload_file
 
 router = APIRouter()
@@ -25,4 +27,4 @@ async def upload_file(file: UploadFile):
 
     file_url = b2_upload_file(local_file=filepath, file_name=file.filename)
 
-    return {"message": f"Successfuly uploaded {file.filename}", "file_url": file_url}
+    return {"detail": f"Successfuly uploaded {file.filename}", "file_url": file_url}

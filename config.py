@@ -2,11 +2,18 @@
 # https://rednafi.github.io/digressions/python/2020/06/03/python-configs.html
 from functools import lru_cache
 from typing import Optional
+
 from pydantic import BaseSettings, Field
 
 
 class BaseConfig(BaseSettings):
     ENV_STATE: Optional[str] = Field(None, env="ENV_STATE")
+
+    class Config:
+        """Loads the dotenv file. Including this is necessary to get
+        pydantic to load a .env file."""
+
+        env_file: str = ".env"
 
 
 class GlobalConfig(BaseConfig):
@@ -17,12 +24,6 @@ class GlobalConfig(BaseConfig):
     B2_BUCKET_NAME: Optional[str] = None
     MAILGUN_DOMAIN: Optional[str] = None
     MAILGUN_API_KEY: Optional[str] = None
-
-    class Config:
-        """Loads the dotenv file. Including this is necessary to get
-        pydantic to load a .env file."""
-
-        env_file: str = ".env"
 
 
 class DevConfig(GlobalConfig):

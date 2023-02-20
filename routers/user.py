@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, status
 from jose import ExpiredSignatureError, JWTError
 
@@ -13,6 +15,7 @@ from security import (
     get_user,
 )
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -24,9 +27,11 @@ async def register(user: UserIn, background_tasks: BackgroundTasks, request: Req
             detail="A user with that email already exists",
         )
 
+    logger.debug("Creating user")
     hashed_password = get_password_hash(user.password)
     query = user_table.insert().values(email=user.email, password=hashed_password)
     await database.execute(query)
+    logger.debug("Background task to send email")
     background_tasks.add_task(
         tasks.send_user_registration_email,
         user.email,
@@ -34,7 +39,7 @@ async def register(user: UserIn, background_tasks: BackgroundTasks, request: Req
             "confirm_email", token=create_confirmation_token(user.email)
         ),
     )
-    return {"message": "User created. Please confirm your email."}
+    return {"detail": "User created. Please confirm your email."}
 
 
 @router.post("/token")
@@ -54,7 +59,7 @@ async def confirm_email(token: str):
             .values(confirmed=True)
         )
         await database.execute(query)
-        return {"detail": "Email confirmed"}
+        return {"detail": "User confirmed"}
     except ExpiredSignatureError:
         raise HTTPException(status_code=400, detail="Token has expired.")
     except JWTError:

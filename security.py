@@ -1,16 +1,17 @@
 import datetime
+import logging
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
+from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
 
 from database import database, user_table
 
+logger = logging.getLogger(__name__)
+
 SECRET_KEY = "9b73f2a1bdd7ae163444473d29a6885ffa22ab26117068f72a5a56a74d12d1fc"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-CONFIRM_TOKEN_EXPIRE_MINUTES = 1440
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -22,18 +23,26 @@ credentials_exception = HTTPException(
 )
 
 
-def create_access_token(id_: str):
+def access_token_expire_minutes() -> int:
+    return 30
+
+
+def confirm_token_expire_minutes() -> int:
+    return 1440
+
+
+def create_access_token(email: str):
     expire = datetime.datetime.utcnow() + datetime.timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+        minutes=access_token_expire_minutes()
     )
-    jwt_data = {"sub": id_, "exp": expire}
+    jwt_data = {"sub": email, "exp": expire}
     encoded_jwt = jwt.encode(jwt_data, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
 def create_confirmation_token(email: str):
     expire = datetime.datetime.utcnow() + datetime.timedelta(
-        minutes=CONFIRM_TOKEN_EXPIRE_MINUTES
+        minutes=confirm_token_expire_minutes()
     )
     jwt_data = {"sub": email, "exp": expire}
     encoded_jwt = jwt.encode(jwt_data, SECRET_KEY, algorithm=ALGORITHM)
@@ -85,6 +94,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         email = payload.get("sub")
         if email is None:
             raise credentials_exception
+    except ExpiredSignatureError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from e
     except JWTError as e:
         raise credentials_exception from e
     user = await get_user(email=email)

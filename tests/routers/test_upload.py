@@ -1,6 +1,7 @@
-import pathlib
-import pytest
 import contextlib
+import pathlib
+
+import pytest
 from httpx import AsyncClient
 
 
@@ -20,7 +21,8 @@ def mock_b2_upload_file(mocker):
     )
 
 
-# Mock the aiofiles.open function so that it returns a fake file object from the fake filesystem
+# Mock the aiofiles.open function so that it
+# returns a fake file object from the fake filesystem
 @pytest.fixture(autouse=True)
 def aiofiles_mock_open(mocker, fs):
     import io

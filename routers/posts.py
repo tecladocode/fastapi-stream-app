@@ -1,7 +1,7 @@
 from enum import Enum
 
 import sqlalchemy
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 
 from database import comments_table, database, likes_table, post_table
 from models.post import (
@@ -16,15 +16,30 @@ from models.post import (
 )
 from models.user import User
 from security import get_current_user
+from tasks import generate_and_add_to_post
 
 router = APIRouter()
 
 
 @router.post("/post", response_model=UserPost)
-async def create_post(post: UserPostIn, current_user: User = Depends(get_current_user)):
+async def create_post(
+    post: UserPostIn,
+    background_tasks: BackgroundTasks,
+    request: Request,
+    prompt: str = None,
+    current_user: User = Depends(get_current_user),
+):
     data = {**post.dict(), "user_id": current_user.id}
     query = post_table.insert().values(data)
     last_record_id = await database.execute(query)
+    if prompt:
+        background_tasks.add_task(
+            generate_and_add_to_post,
+            current_user.email,
+            last_record_id,
+            request.url_for("get_post_with_comments", post_id=last_record_id),
+            prompt,
+        )
     return {**data, "id": last_record_id}
 
 

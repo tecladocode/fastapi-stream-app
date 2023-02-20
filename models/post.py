@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -8,6 +10,7 @@ class UserPostIn(BaseModel):
 class UserPost(UserPostIn):
     id: int
     user_id: int
+    image_url: Optional[str] = None
 
     class Config:
         orm_mode = True

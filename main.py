@@ -1,9 +1,15 @@
+import logging
+import logging.config
+
 from fastapi import FastAPI
 
 from database import database
 from routers.posts import router as posts_router
 from routers.upload import router as upload_router
 from routers.user import router as user_router
+
+logging.config.fileConfig("logging.conf", disable_existing_loggers=False)
+
 
 app = FastAPI()
 app.include_router(upload_router)
