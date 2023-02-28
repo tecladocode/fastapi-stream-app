@@ -3,7 +3,7 @@ import logging
 import pytest
 from httpx import AsyncClient
 
-import security
+from storeapi import security
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ async def test_create_post(async_client: AsyncClient, logged_in_token: str):
 async def test_create_post_expired_token(
     async_client: AsyncClient, confirmed_user: dict, mocker
 ):
-    mocker.patch("security.access_token_expire_minutes", return_value=-1)
+    mocker.patch("storeapi.security.access_token_expire_minutes", return_value=-1)
     token = security.create_access_token(confirmed_user["id"])
     response = await async_client.post(
         "/post",
@@ -222,3 +222,11 @@ async def test_get_post_with_comments(
             }
         ],
     }
+
+
+@pytest.mark.anyio
+async def test_get_missing_post_with_comments(
+    async_client: AsyncClient, created_post: dict, created_comment: dict
+):
+    response = await async_client.get("/post/2")
+    assert response.status_code == 404

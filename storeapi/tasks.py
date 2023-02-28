@@ -2,15 +2,15 @@ import logging
 
 import httpx
 
-from config import config
-from database import database, post_table
+from storeapi.config import config
+from storeapi.database import database, post_table
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
 async def send_simple_message(to: str, subject: str, body: str):
-    logger.debug(f"Sending email to {to[:3]} with subject {subject[:20]}")
+    logger.debug(f"Sending email to '{to[:3]}' with subject '{subject[:20]}'")
     async with httpx.AsyncClient() as client:
         response = await client.post(
             f"https://api.mailgun.net/v3/{config.MAILGUN_DOMAIN}/messages",
@@ -58,7 +58,7 @@ async def generate_and_add_to_post(
     prompt: str = "A blue british shorthair cat is sitting on a couch",
 ):
     response = await _generate_cute_creature_api(prompt)
-    logger.debug(response)
+    logger.debug("Connecting to database to update post")
     await database.connect()
     query = (
         post_table.update()
@@ -67,6 +67,7 @@ async def generate_and_add_to_post(
     )
     await database.execute(query)
     await database.disconnect()
+    logger.debug("Database connection in background task closed")
     return await send_simple_message(
         email,
         "Image generation completed",

@@ -1,7 +1,7 @@
 import databases
 import sqlalchemy
 
-from config import config
+from storeapi.config import config
 
 
 def get_db():

@@ -3,10 +3,10 @@ import logging
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, status
 from jose import ExpiredSignatureError, JWTError
 
-import tasks
-from database import database, user_table
-from models.user import UserIn
-from security import (
+from storeapi import tasks
+from storeapi.database import database, user_table
+from storeapi.models.user import UserIn
+from storeapi.security import (
     authenticate_user,
     create_access_token,
     create_confirmation_token,
@@ -26,12 +26,10 @@ async def register(user: UserIn, background_tasks: BackgroundTasks, request: Req
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A user with that email already exists",
         )
-
-    logger.debug("Creating user")
     hashed_password = get_password_hash(user.password)
     query = user_table.insert().values(email=user.email, password=hashed_password)
     await database.execute(query)
-    logger.debug("Background task to send email")
+    logger.debug("Submitting background task to send email")
     background_tasks.add_task(
         tasks.send_user_registration_email,
         user.email,

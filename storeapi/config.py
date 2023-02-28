@@ -51,5 +51,4 @@ def get_config(env_state):
     return configs[env_state]()
 
 
-print("Getting configuration")
 config = get_config(BaseConfig().ENV_STATE)

@@ -1,6 +1,6 @@
 import pytest
 
-from tasks import send_simple_message
+from storeapi.tasks import send_simple_message
 
 
 @pytest.mark.anyio

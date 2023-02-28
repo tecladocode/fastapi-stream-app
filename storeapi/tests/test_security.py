@@ -1,7 +1,7 @@
 import pytest
 from jose import jwt
 
-import security
+from storeapi import security
 
 
 @pytest.mark.anyio

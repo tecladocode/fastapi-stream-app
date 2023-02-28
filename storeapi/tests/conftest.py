@@ -7,8 +7,8 @@ from fastapi.testclient import TestClient
 from httpx import AsyncClient, Response
 
 os.environ["ENV_STATE"] = "test"
-from database import database, user_table  # noqa: E402
-from main import app  # noqa: E402
+from storeapi.database import database, user_table  # noqa: E402
+from storeapi.main import app  # noqa: E402
 
 
 @pytest.fixture(scope="session")
@@ -57,7 +57,7 @@ async def confirmed_user(registered_user: dict):
 
 @pytest.fixture(autouse=True)
 def mock_httpx_client(mocker):
-    mocked_client = mocker.patch("tasks.httpx.AsyncClient")
+    mocked_client = mocker.patch("storeapi.tasks.httpx.AsyncClient")
 
     mocked_async_client = Mock()
     response = Response(status_code=200, content="")
