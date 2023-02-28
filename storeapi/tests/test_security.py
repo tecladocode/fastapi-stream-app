@@ -4,7 +4,6 @@ from jose import jwt
 from storeapi import security
 
 
-@pytest.mark.anyio
 def test_access_token_expire_minutes():
     assert security.access_token_expire_minutes() == 30
 
