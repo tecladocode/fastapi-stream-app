@@ -24,6 +24,7 @@ class GlobalConfig(BaseConfig):
     B2_BUCKET_NAME: Optional[str] = None
     MAILGUN_DOMAIN: Optional[str] = None
     MAILGUN_API_KEY: Optional[str] = None
+    LOGTAIL_API_KEY: Optional[str] = None
 
 
 class DevConfig(GlobalConfig):

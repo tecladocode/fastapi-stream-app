@@ -32,6 +32,7 @@ def confirm_token_expire_minutes() -> int:
 
 
 def create_access_token(email: str):
+    logger.debug("Creating access token", extra={"email": email})
     expire = datetime.datetime.utcnow() + datetime.timedelta(
         minutes=access_token_expire_minutes()
     )
@@ -41,6 +42,7 @@ def create_access_token(email: str):
 
 
 def create_confirmation_token(email: str):
+    logger.debug("Creating confirmation token", extra={"email": email})
     expire = datetime.datetime.utcnow() + datetime.timedelta(
         minutes=confirm_token_expire_minutes()
     )
@@ -68,6 +70,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 async def get_user(email: str):
+    logger.debug("Fetching user from the database", extra={"email": email})
     query = user_table.select().where(user_table.c.email == email)
     result = await database.fetch_one(query)
     if result:
@@ -75,6 +78,7 @@ async def get_user(email: str):
 
 
 async def authenticate_user(email: str, password: str):
+    logger.debug("Authenticating user", extra={"email": email})
     user = await get_user(email)
     if not user:
         raise credentials_exception
