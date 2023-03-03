@@ -1,6 +1,5 @@
 import pytest
 from jose import jwt
-
 from storeapi import security
 
 

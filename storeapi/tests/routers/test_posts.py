@@ -1,11 +1,7 @@
-import logging
-
 import pytest
 from httpx import AsyncClient
 
 from storeapi import security
-
-logger = logging.getLogger(__name__)
 
 
 async def create_post(

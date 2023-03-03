@@ -1,3 +1,4 @@
+import logging
 from enum import Enum
 
 import sqlalchemy
@@ -20,6 +21,8 @@ from storeapi.tasks import generate_and_add_to_post
 
 router = APIRouter()
 
+logger = logging.getLogger(__name__)
+
 select_post_and_likes = (
     sqlalchemy.select(
         post_table, sqlalchemy.func.count(likes_table.c.id).label("likes")
@@ -30,6 +33,7 @@ select_post_and_likes = (
 
 
 async def find_post(post_id: int):
+    logger.debug(f"Finding post with id {post_id}")
     query = post_table.select().where(post_table.c.id == post_id)
     return await database.fetch_one(query)
 

@@ -9,7 +9,7 @@ requests
 python-multipart
 aiofiles
 b2sdk
-rich
 asgi-correlation-id
-python-json-logger
+rich
 logtail-python
+python-json-logger

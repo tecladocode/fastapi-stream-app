@@ -18,6 +18,11 @@ class EmailObfuscationFilter(logging.Filter):
         return True
 
 
+handlers = ["default", "rotating_file"]
+if config.ENV_STATE == "prod":
+    handlers = ["default", "rotating_file", "logtail"]
+
+
 def configure_logging() -> None:
     dictConfig(
         {
@@ -35,7 +40,7 @@ def configure_logging() -> None:
                 "console": {
                     "class": "logging.Formatter",
                     "datefmt": "%Y-%m-%dT%H:%M:%S",
-                    "format": "(%(correlation_id)s) %(name)s:%(lineno)d %(message)s",
+                    "format": "(%(correlation_id)s) %(name)s:%(lineno)d - %(message)s",
                 },
                 "file": {
                     "class": "pythonjsonlogger.jsonlogger.JsonFormatter",
@@ -47,7 +52,7 @@ def configure_logging() -> None:
             },
             "handlers": {
                 "default": {
-                    "class": "rich.logging.RichHandler",
+                    "class": "rich.logging.RichHandler",  # could use logging.StreamHandler instead
                     "level": "DEBUG",
                     "formatter": "console",
                     "filters": ["correlation_id", "email_obfuscation"],
@@ -74,7 +79,7 @@ def configure_logging() -> None:
             "loggers": {
                 "uvicorn": {"handlers": ["default", "rotating_file"], "level": "INFO"},
                 "storeapi": {
-                    "handlers": ["default", "rotating_file", "logtail"],
+                    "handlers": handlers,
                     "level": "DEBUG" if config.ENV_STATE == "dev" else "INFO",
                     "propagate": False,
                 },
