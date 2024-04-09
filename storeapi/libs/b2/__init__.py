@@ -2,7 +2,6 @@ import logging
 from functools import lru_cache
 
 import b2sdk.v2 as b2
-
 from storeapi.config import config
 
 logger = logging.getLogger(__name__)

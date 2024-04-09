@@ -3,6 +3,5 @@ black
 isort
 httpx
 pytest
-pytest-asyncio
 pytest-mock
 pyfakefs

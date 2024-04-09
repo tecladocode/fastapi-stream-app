@@ -13,23 +13,66 @@ def test_confirm_token_expire_minutes():
 
 def test_create_access_token():
     token = security.create_access_token("123")
-    assert {"sub": "123"}.items() <= jwt.decode(
-        token, security.SECRET_KEY, algorithms=[security.ALGORITHM]
+    assert {"sub": "123", "type": "access"}.items() <= jwt.decode(
+        token, key=security.SECRET_KEY, algorithms=[security.ALGORITHM]
     ).items()
 
 
 def test_create_confirmation_token():
-    email = "test@example.com"
-    token = security.create_confirmation_token(email)
-    assert {"sub": email}.items() <= jwt.decode(
-        token, security.SECRET_KEY, algorithms=[security.ALGORITHM]
+    token = security.create_confirmation_token("123")
+    assert {"sub": "123", "type": "confirmation"}.items() <= jwt.decode(
+        token, key=security.SECRET_KEY, algorithms=[security.ALGORITHM]
     ).items()
 
 
-def test_get_email_from_confirmation_token():
+def test_get_subject_for_token_type_valid_confirmation():
     email = "test@example.com"
     token = security.create_confirmation_token(email)
-    assert security.get_email_from_confirmation_token(token) == email
+    assert email == security.get_subject_for_token_type(token, "confirmation")
+
+
+def test_get_subject_for_token_type_valid_access():
+    email = "test@example.com"
+    token = security.create_access_token(email)
+    assert email == security.get_subject_for_token_type(token, "access")
+
+
+def test_get_subject_for_token_type_expired(mocker):
+    mocker.patch("storeapi.security.access_token_expire_minutes", return_value=-1)
+    email = "test@example.com"
+    token = security.create_access_token(email)
+    with pytest.raises(security.HTTPException) as exc_info:
+        security.get_subject_for_token_type(token, "access")
+    assert "Token has expired" == exc_info.value.detail
+
+
+def test_get_subject_for_token_type_invalid_token():
+    token = "invalid token"
+    with pytest.raises(security.HTTPException) as exc_info:
+        security.get_subject_for_token_type(token, "access")
+    assert "Invalid token" == exc_info.value.detail
+
+
+def test_get_subject_for_token_type_missing_sub():
+    email = "test@example.com"
+    token = security.create_access_token(email)
+    payload = jwt.decode(
+        token, key=security.SECRET_KEY, algorithms=[security.ALGORITHM]
+    )
+    del payload["sub"]
+    token = jwt.encode(payload, key=security.SECRET_KEY, algorithm=security.ALGORITHM)
+
+    with pytest.raises(security.HTTPException) as exc_info:
+        security.get_subject_for_token_type(token, "access")
+    assert "Token is missing 'sub' field" == exc_info.value.detail
+
+
+def test_get_subject_for_token_type_wrong_type():
+    email = "test@example.com"
+    token = security.create_confirmation_token(email)
+    with pytest.raises(security.HTTPException) as exc_info:
+        security.get_subject_for_token_type(token, "access")
+    assert "Token has incorrect type, expected 'access'" == exc_info.value.detail
 
 
 def test_password_hashes():
@@ -40,6 +83,7 @@ def test_password_hashes():
 @pytest.mark.anyio
 async def test_get_user(registered_user: dict):
     user = await security.get_user(registered_user["email"])
+
     assert user.email == registered_user["email"]
 
 
@@ -60,31 +104,31 @@ async def test_authenticate_user(confirmed_user: dict):
 @pytest.mark.anyio
 async def test_authenticate_user_not_found():
     with pytest.raises(security.HTTPException):
-        await security.authenticate_user("test@example.com", "1234")
+        await security.authenticate_user("test@example.net", "1234")
 
 
 @pytest.mark.anyio
-async def test_authenticate_user_wrong_password(confirmed_user: dict):
+async def test_authenticate_user_wrong_password(registered_user: dict):
     with pytest.raises(security.HTTPException):
-        await security.authenticate_user(confirmed_user["email"], "wrong password")
+        await security.authenticate_user(registered_user["email"], "wrong password")
 
 
 @pytest.mark.anyio
-async def test_authenticate_user_not_confirmed(registered_user: dict):
-    with pytest.raises(security.HTTPException):
-        await security.authenticate_user(
-            registered_user["email"], registered_user["password"]
-        )
-
-
-@pytest.mark.anyio
-async def test_get_current_user(confirmed_user: dict):
-    token = security.create_access_token(confirmed_user["email"])
+async def test_get_current_user(registered_user: dict):
+    token = security.create_access_token(registered_user["email"])
     user = await security.get_current_user(token)
-    assert user.email == confirmed_user["email"]
+    assert user.email == registered_user["email"]
 
 
 @pytest.mark.anyio
 async def test_get_current_user_invalid_token():
     with pytest.raises(security.HTTPException):
         await security.get_current_user("invalid token")
+
+
+@pytest.mark.anyio
+async def test_get_current_user_wrong_type_token(registered_user: dict):
+    token = security.create_confirmation_token(registered_user["email"])
+
+    with pytest.raises(security.HTTPException):
+        await security.get_current_user(token)

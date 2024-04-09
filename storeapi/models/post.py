@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class UserPostIn(BaseModel):
@@ -8,19 +8,17 @@ class UserPostIn(BaseModel):
 
 
 class UserPost(UserPostIn):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
     image_url: Optional[str] = None
 
-    class Config:
-        orm_mode = True
-
 
 class UserPostWithLikes(UserPost):
-    likes: int
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        orm_mode = True
+    likes: int
 
 
 class CommentIn(BaseModel):
@@ -29,11 +27,10 @@ class CommentIn(BaseModel):
 
 
 class Comment(CommentIn):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
-
-    class Config:
-        orm_mode = True
 
 
 class UserPostWithComments(BaseModel):
